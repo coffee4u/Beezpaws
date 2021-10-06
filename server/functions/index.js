@@ -49,14 +49,12 @@ exports.onNewFlyer = functions.firestore.document('flyers/{flyerId}').onCreate(a
     contentType: 'image/jpeg',
   };
   const fileName = '3_0_0.jpg'
-  const filePath = admin.storage().bucket('beezpaws').name
+  const  bucket = admin.storage().bucket('beezpaws')
+  const filePath = bucket.name
   const tempFilePath = path.join(os.tmpdir(), fileName);
   await response.data.pipe(fs.createWriteStream(tempFilePath))
   functions.logger.log('Image downloaded locally to', tempFilePath);
-  await spawn('convert', [tempFilePath, '-thumbnail', '200x200>', tempFilePath]);
-  functions.logger.log('Thumbnail created at', tempFilePath);
-  const thumbFileName = `thumb_${fileName}`;
-  const thumbFilePath = path.join(path.dirname(filePath), thumbFileName);
+  const thumbFilePath = path.join(path.dirname(filePath), fileName);
   // Uploading the thumbnail.
   await bucket.upload(tempFilePath, {
     destination: thumbFilePath,
@@ -65,6 +63,8 @@ exports.onNewFlyer = functions.firestore.document('flyers/{flyerId}').onCreate(a
   // Once the thumbnail has been uploaded delete the local file to free up disk space.
   return fs.unlinkSync(tempFilePath);
 })
+
+
 // exports.gatherFlipp = functions.https.onRequest((request, response) => {
 //   const c = new Crawler({
 //     // 最大并发数默认为10
